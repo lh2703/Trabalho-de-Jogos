@@ -4,8 +4,6 @@ import random
 pygame.init()
 pygame.font.init()
 
-
-
 font = font = pygame.font.Font(None, 40)
 Nome = "Luís Henrique"
 
@@ -20,7 +18,6 @@ screen = pygame.display.set_mode((WIDTH , HEIGHT))
 
 texto = font.render(Nome, True, (0,0,0))
 rect = texto.get_rect(center=(WIDTH/2, HEIGHT/2))
-
 
 #loop
 while True:
