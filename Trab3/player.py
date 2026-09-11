@@ -1,72 +1,62 @@
+# player.py
 import pygame
-from abc import ABC, abstractmethod
-from util import colored_sprite
-
-class Player:
-
-    def __init__(self, pos):
-        self.pos = pos
-        self.state = ExampleState(self)
-
-    def update(self, dt):
-        self.state.update(dt)
-
-    def draw(self, screen):
-        self.state.draw(screen)
-
-    def action_1(self):
-        self.state.action_1()
-
-    def action_2(self):
-        self.state.action_2()
-
-    def change_state(self, new_state):
-        self.state.delete()
-        self.state = new_state(self)
+import time
 
 
-class PlayerState(ABC):
+class Player(pygame.sprite.Sprite):
+    def __init__(self, event_manager):
+        super().__init__()
+        self.image = pygame.Surface((32, 32))
+        self.image.fill((255, 255, 0))  # Pato Amarelo
+        self.rect = self.image.get_rect(center=(400, 300))
+        self.speed = 5
+        self.state = "NORMAL"
 
-    # Sprite é comum a classe estado
-    sprite = pygame.Surface((32, 32))
+        self.hp = 3  # 3 Vidas
+        self.invincible_time = 0
+        self.invincible_duration = 2
 
-    def __init__(self, player):
-        self.P = player
+        self.event_manager = event_manager
 
-    def draw(self, screen):
-        screen.blit(self.sprite, self.P.pos)
+    def update(self, keys):
+        if self.state == "MORTO":
+            self.image.set_alpha(0)  # Fica invisível quando morre
+            return
 
-    def delete(self):
-        pass  # se precisar apagar algo na mudança de estados
+        # Controle da invencibilidade
+        if self.state == "INVENCIVEL" and time.time() - self.invincible_time > self.invincible_duration:
+            self.state = "NORMAL"
+            self.image.set_alpha(255)
 
-    @abstractmethod
-    def update(self, dt):
-        pass
+        # Pisca na tela enquanto está invencível
+        if self.state == "INVENCIVEL":
+            alpha = 128 if int(time.time() * 10) % 2 == 0 else 255
+            self.image.set_alpha(alpha)
 
-    @abstractmethod
-    def action_1(self, dt):
-        pass
+        # Movimentação
+        dx, dy = 0, 0
+        if keys[pygame.K_w]: dy -= self.speed
+        if keys[pygame.K_s]: dy += self.speed
+        if keys[pygame.K_a]: dx -= self.speed
+        if keys[pygame.K_d]: dx += self.speed
 
-    @abstractmethod
-    def action_2(self, dt):
-        pass
+        self.rect.x += dx
+        self.rect.y += dy
 
+    def take_damage(self):
+        if self.state == "NORMAL":
+            self.hp -= 1
+            if self.hp <= 0:
+                self.state = "MORTO"
+            else:
+                self.state = "INVENCIVEL"
+                self.invincible_duration = 2  # Invencibilidade de 2s após dano
+                self.invincible_time = time.time()
 
-class ExampleState(PlayerState):
+    def add_life(self):
+        self.hp += 1
 
-    # Sempre aqui para o estados, mesmo que descarregue
-    # sprite = pygame.image.load("images/duck/base.png")
-
-    # ALternativamente, use em retângulo
-    sprite = colored_sprite((0, 255, 0))
-
-    def update(self, dt):
-        pass  # faça sua implementação
-    
-    def action_1(self):
-        print("faz a ação 1")
-        pass # faça sua implementação
-
-    def action_2(self):
-        print("faz a ação 2")
-        pass # faça sua implementação
+    def make_invincible(self, duration):
+        self.state = "INVENCIVEL"
+        self.invincible_duration = duration  # Aqui entram os 5s do power-up
+        self.invincible_time = time.time()

@@ -1,61 +1,23 @@
+# bullet.py
 import pygame
-from abc import ABC, abstractmethod
-from util import colored_sprite, EventHandler
-
-
 import math
 
-def rotate(pos, angle, axis = (0,0)):
-    angle = math.radians(angle)
-    x, y = pos
-    ax, ay = axis
 
-    # Translate so axis is the origin
-    x -= ax
-    y -= ay
+class Bullet(pygame.sprite.Sprite):
+    def __init__(self, x, y, target_x, target_y):
+        super().__init__()
+        self.image = pygame.Surface((8, 8))
+        self.image.fill((0, 255, 255))
+        self.rect = self.image.get_rect(center=(x, y))
 
-    # Rotate
-    cos_a = math.cos(angle)
-    sin_a = math.sin(angle)
+        # Calcula a direção do tiro
+        angle = math.atan2(target_y - y, target_x - x)
+        self.dx = math.cos(angle) * 10
+        self.dy = math.sin(angle) * 10
 
-    rx = x * cos_a - y * sin_a
-    ry = x * sin_a + y * cos_a
-
-    # Translate back
-    return rx + ax, ry + ay
-
-class Bullet (ABC):
-
-    def __init__(self, pos, angle = 0, radius = 16, life_time = None):
-        self.pos = pos
-        self.origin = pygame.Vector2(pos)
-        self.life_time = life_time
-        self.angle = angle
-        self.elapsed = 0
-        self.radius = radius
-
-        self.sprite = colored_sprite ((255, 0, 0), (self.radius*2, self.radius*2))
-
-    def update(self, dt):
-
-        self.elapsed += dt
-        if self.life_time and self.elapsed >= self.life_time:
-                self.destroy()       
-
-        self.pos = rotate(self.move(), self.angle)+self.origin
-
-    def draw(self, screen):
-        screen.blit(self.sprite, self.pos)
-
-    @abstractmethod
-    def move(self):
-        pass
-
-    def destroy(self): # pede para deletar
-        EventHandler().notify("DestroyObj", self) # avisa o mundo que saiu da tela
-
-class sinBullet (Bullet):
-    # exemplo, façam algo mais rebuscado
-
-    def move(self):
-        return pygame.Vector2(self.elapsed, math.sin(self.elapsed/50)*50) 
+    def update(self):
+        self.rect.x += self.dx
+        self.rect.y += self.dy
+        # Destrói o projétil se sair da tela
+        if self.rect.x < 0 or self.rect.x > 800 or self.rect.y < 0 or self.rect.y > 600:
+            self.kill()
